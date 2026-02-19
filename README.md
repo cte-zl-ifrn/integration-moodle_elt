@@ -286,7 +286,7 @@ docker-compose exec postgres psql -U airflow -d airflow -c "\dt moodle_raw*"
 
 ## 📚 Dependencies
 
-- Apache Airflow 2.9+
+- Apache Airflow 2.10+
 - PostgreSQL 15+
 - Moodle 4.5+
 - Apache Superset (latest)
