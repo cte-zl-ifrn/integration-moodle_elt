@@ -194,11 +194,8 @@ class TestDAGConfigurationLoading:
         # but we can test the logic
         
         # Act
-        try:
-            base_url = mock_variable_get('moodle1_url')
-            token = mock_variable_get('moodle1_token')
-        except KeyError:
-            pass
+        base_url = mock_variable_get('moodle1_url')
+        token = mock_variable_get('moodle1_token')
         
         # Assert
         assert base_url == 'https://m1.com'
