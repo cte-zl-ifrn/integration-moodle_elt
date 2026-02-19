@@ -138,7 +138,7 @@ See `dags/sql/` directory for complete SQL schemas.
    - URLs **must** use `https://` protocol (HTTP is not allowed for security)
    - If you omit the protocol, `https://` will be added automatically
    - Number of URLs must match number of tokens (comma-separated)
-   - URLs and tokens are matched by position (1st URL ↔ 1st token, etc.)
+   - URLs and tokens are matched by position (1st URL with 1st token, etc.)
    
    **Option B: Individual Instance Variables (Legacy)**
    

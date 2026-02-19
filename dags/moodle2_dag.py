@@ -24,8 +24,7 @@ from utils.moodle_api import (
     prepare_raw_record,
     validate_json_schema,
     compute_hash,
-    get_moodle_instance_config,
-    parse_moodle_config
+    get_moodle_instance_config
 )
 
 logger = logging.getLogger(__name__)

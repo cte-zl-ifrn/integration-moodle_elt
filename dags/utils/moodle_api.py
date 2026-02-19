@@ -15,6 +15,9 @@ from urllib3.util.retry import Retry
 
 logger = logging.getLogger(__name__)
 
+# Constants
+MIN_HTTPS_URL_LENGTH = 12  # Minimum valid HTTPS URL length (e.g., 'https://a.co')
+
 
 class MoodleAPIClient:
     """
@@ -92,7 +95,7 @@ class MoodleAPIClient:
         url = url.rstrip('/')
         
         # Basic URL validation
-        if not url.startswith('https://') or len(url) < 12:  # https://a.co is minimum
+        if not url.startswith('https://') or len(url) < MIN_HTTPS_URL_LENGTH:
             raise ValueError(f"Invalid Moodle URL format: {url}")
         
         return url
