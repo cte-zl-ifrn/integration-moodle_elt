@@ -114,6 +114,24 @@ services:
     depends_on:
       - postgres
 
+  test:
+    image: python:3.11-slim
+    container_name: moodle-elt-test
+    working_dir: /app
+    volumes:
+      - ${AIRFLOW_PROJ_DIR:-.}:/app
+    environment:
+      - PYTHONPATH=/app/dags
+    command: >
+      bash -c "
+        pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt &&
+        pytest -v --cov=dags --cov-report=term-missing --cov-report=html:htmlcov
+      "
+    depends_on:
+      - postgres
+    profiles:
+      - test
+
 volumes:
   postgres-db-volume:
   superset-data:
