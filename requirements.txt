@@ -6,7 +6,7 @@ apache-airflow-providers-postgres==5.12.1
 psycopg2-binary==2.9.9
 
 # HTTP and API clients
-requests==2.31.0
+requests==2.32.4
 urllib3==2.6.3  # Updated to 2.6.3 to fix decompression vulnerabilities
 
 # Utilities
