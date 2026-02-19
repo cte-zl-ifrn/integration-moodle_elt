@@ -40,7 +40,8 @@ class MoodleAPIClient:
             max_retries: Maximum number of retry attempts
             timeout: Request timeout in seconds
         """
-        self.base_url = base_url.rstrip('/')
+        # Validate and enforce https:// URL
+        self.base_url = self._validate_url(base_url)
         self.token = token
         self.rate_limit_delay = rate_limit_delay
         self.timeout = timeout
@@ -56,6 +57,45 @@ class MoodleAPIClient:
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
+    
+    def _validate_url(self, url: str) -> str:
+        """
+        Validate and enforce https:// protocol for Moodle URL.
+        
+        Args:
+            url: URL to validate
+            
+        Returns:
+            Validated URL with https:// protocol
+            
+        Raises:
+            ValueError: If URL is invalid or doesn't use https://
+        """
+        if not url:
+            raise ValueError("Moodle URL cannot be empty")
+        
+        url = url.strip()
+        
+        # Check if URL starts with http:// (insecure)
+        if url.lower().startswith('http://'):
+            raise ValueError(
+                f"Insecure HTTP protocol detected. Please use HTTPS for Moodle URL: {url}\n"
+                "Change 'http://' to 'https://'"
+            )
+        
+        # Add https:// if no protocol is specified
+        if not url.lower().startswith('https://'):
+            url = f'https://{url}'
+            logger.info(f"Added https:// protocol to URL: {url}")
+        
+        # Remove trailing slash
+        url = url.rstrip('/')
+        
+        # Basic URL validation
+        if not url.startswith('https://') or len(url) < 12:  # https://a.co is minimum
+            raise ValueError(f"Invalid Moodle URL format: {url}")
+        
+        return url
     
     def _call_api(
         self,
@@ -289,3 +329,82 @@ def validate_json_schema(data: Dict[str, Any], entity: str) -> bool:
                 raise ValueError(f"Missing required field '{field}' for entity '{entity}'")
     
     return True
+
+
+def parse_moodle_config(urls_str: str, tokens_str: str) -> List[Dict[str, str]]:
+    """
+    Parse comma-separated Moodle URLs and tokens into a list of configurations.
+    
+    Args:
+        urls_str: Comma-separated list of Moodle URLs
+        tokens_str: Comma-separated list of Moodle tokens
+        
+    Returns:
+        List of dictionaries with 'url' and 'token' keys
+        
+    Raises:
+        ValueError: If URLs and tokens count mismatch or invalid format
+        
+    Example:
+        >>> urls = "https://moodle1.com,https://moodle2.com"
+        >>> tokens = "token1,token2"
+        >>> configs = parse_moodle_config(urls, tokens)
+        >>> len(configs)
+        2
+    """
+    if not urls_str or not tokens_str:
+        raise ValueError("Both URLs and tokens must be provided")
+    
+    # Split by comma and strip whitespace
+    urls = [url.strip() for url in urls_str.split(',') if url.strip()]
+    tokens = [token.strip() for token in tokens_str.split(',') if token.strip()]
+    
+    if len(urls) != len(tokens):
+        raise ValueError(
+            f"Number of URLs ({len(urls)}) must match number of tokens ({len(tokens)}). "
+            "Ensure you have the same number of comma-separated URLs and tokens."
+        )
+    
+    if not urls:
+        raise ValueError("At least one Moodle URL and token must be provided")
+    
+    # Create configuration list
+    configs = []
+    for i, (url, token) in enumerate(zip(urls, tokens)):
+        if not url or not token:
+            raise ValueError(f"Empty URL or token at position {i+1}")
+        
+        configs.append({
+            'url': url,
+            'token': token,
+            'instance': f'moodle{i+1}'
+        })
+    
+    return configs
+
+
+def get_moodle_instance_config(instance_id: str, urls_str: str, tokens_str: str) -> Dict[str, str]:
+    """
+    Get configuration for a specific Moodle instance from comma-separated lists.
+    
+    Args:
+        instance_id: Instance identifier (e.g., 'moodle1', 'moodle2')
+        urls_str: Comma-separated list of Moodle URLs
+        tokens_str: Comma-separated list of Moodle tokens
+        
+    Returns:
+        Dictionary with 'url' and 'token' for the specified instance
+        
+    Raises:
+        ValueError: If instance not found in configuration
+    """
+    configs = parse_moodle_config(urls_str, tokens_str)
+    
+    for config in configs:
+        if config['instance'] == instance_id:
+            return config
+    
+    raise ValueError(
+        f"Instance '{instance_id}' not found in configuration. "
+        f"Available instances: {[c['instance'] for c in configs]}"
+    )
