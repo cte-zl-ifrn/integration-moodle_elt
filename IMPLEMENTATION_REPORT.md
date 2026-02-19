@@ -52,7 +52,7 @@ All requirements from the problem statement have been successfully implemented:
 
 ### ✅ Infrastructure
 - Docker Compose orchestration
-- Apache Airflow 2.10+ (scheduler + webserver)
+- Apache Airflow 3.1+ (scheduler + webserver)
 - PostgreSQL 15+ with proper schemas
 - Apache Superset for visualization
 - Automated setup script (setup.sh)
