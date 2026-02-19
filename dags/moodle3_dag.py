@@ -23,7 +23,8 @@ from utils.moodle_api import (
     MoodleAPIClient,
     prepare_raw_record,
     validate_json_schema,
-    compute_hash
+    compute_hash,
+    get_moodle_instance_config
 )
 
 logger = logging.getLogger(__name__)
@@ -45,9 +46,34 @@ default_args = {
 
 
 def get_moodle_client() -> MoodleAPIClient:
-    """Initialize Moodle API client from Airflow Variables."""
-    base_url = Variable.get(f'{MOODLE_INSTANCE}_url')
-    token = Variable.get(f'{MOODLE_INSTANCE}_token')
+    """
+    Initialize Moodle API client from Airflow Variables.
+    Supports both comma-separated lists and individual instance variables.
+    """
+    try:
+        # Try to get individual instance variables first (legacy support)
+        base_url = Variable.get(f'{MOODLE_INSTANCE}_url')
+        token = Variable.get(f'{MOODLE_INSTANCE}_token')
+        logger.info(f"Using individual variables for {MOODLE_INSTANCE}")
+    except KeyError:
+        # Fall back to comma-separated configuration
+        try:
+            urls_str = Variable.get('MOODLE_URLS')
+            tokens_str = Variable.get('MOODLE_TOKENS')
+            
+            # Parse and get configuration for this instance
+            config = get_moodle_instance_config(MOODLE_INSTANCE, urls_str, tokens_str)
+            base_url = config['url']
+            token = config['token']
+            logger.info(f"Using comma-separated configuration for {MOODLE_INSTANCE}")
+        except KeyError as e:
+            raise ValueError(
+                f"Missing Moodle configuration for {MOODLE_INSTANCE}. "
+                f"Please configure either:\n"
+                f"1. Individual variables: {MOODLE_INSTANCE}_url and {MOODLE_INSTANCE}_token\n"
+                f"2. Comma-separated lists: MOODLE_URLS and MOODLE_TOKENS"
+            ) from e
+    
     return MoodleAPIClient(base_url=base_url, token=token)
 
 

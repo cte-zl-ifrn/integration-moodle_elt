@@ -126,10 +126,28 @@ See `dags/sql/` directory for complete SQL schemas.
 
 6. **Configure Airflow Variables**
    
+   You can configure Moodle instances in **two ways**:
+   
+   **Option A: Comma-Separated Lists (Recommended for multiple instances)**
+   
    In Airflow UI, go to Admin → Variables and add:
+   - `MOODLE_URLS` = `https://moodle1.com,https://moodle2.com,https://moodle3.com,https://moodle4.com`
+   - `MOODLE_TOKENS` = `token1,token2,token3,token4`
+   
+   ⚠️ **Important**: 
+   - URLs **must** use `https://` protocol (HTTP is not allowed for security)
+   - If you omit the protocol, `https://` will be added automatically
+   - Number of URLs must match number of tokens (comma-separated)
+   - URLs and tokens are matched by position (1st URL with 1st token, etc.)
+   
+   **Option B: Individual Instance Variables (Legacy)**
+   
+   In Airflow UI, go to Admin → Variables and add for each instance:
    - `moodle1_url` = `https://your-moodle1.com`
    - `moodle1_token` = `your_web_services_token`
    - Repeat for `moodle2`, `moodle3`, `moodle4`
+   
+   ℹ️ **Note**: Individual variables take precedence if both formats are configured.
 
 7. **Create PostgreSQL Connection**
    
@@ -259,12 +277,24 @@ GROUP BY instance;
 
 ## 🔐 Security Features
 
+- ✅ **HTTPS Enforcement** - All Moodle URLs must use `https://` protocol
+- ✅ **Automatic URL Validation** - URLs are validated on client initialization
 - ✅ Rate limiting (1s between API calls)
 - ✅ Retry logic with exponential backoff
 - ✅ UPSERT operations (deduplication via hash)
 - ✅ JSON schema validation
 - ✅ Connection pooling
 - ✅ Timeout handling
+
+### HTTPS Requirement
+
+For security reasons, **all Moodle URLs must use HTTPS** (`https://`):
+
+- ✅ **Allowed**: `https://moodle.example.com`
+- ✅ **Allowed**: `moodle.example.com` (automatically adds `https://`)
+- ❌ **Rejected**: `http://moodle.example.com` (insecure HTTP)
+
+If you try to use an HTTP URL, the system will raise a clear error message asking you to use HTTPS instead.
 
 ## 🐛 Troubleshooting
 
